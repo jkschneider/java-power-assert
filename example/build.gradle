@@ -1,0 +1,15 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations.testCompile.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
+
+dependencies {
+    testCompile 'io.jschneider:java-power-assert:latest.integration'
+    testCompile 'junit:junit:4.11'
+}

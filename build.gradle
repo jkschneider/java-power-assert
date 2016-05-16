@@ -1,0 +1,71 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'nebula.nebula-release' version '4.0.1'
+    id 'com.jfrog.bintray' version '1.6'
+}
+
+group = 'io.jschneider'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    /*
+    This dependency comes from lombok at https://projectlombok.org/ivyrepo/langtools/javac-1.7.0.jar. I thought that
+    passing ignore.symbol.file=true to javac would allow compilation against the internal AST API, but it still fails for
+    some inexplicable reason. Somehow IntelliJ compiles against the internal API with no problem without this dependency...
+
+    compileJava {
+        options.fork = true
+        options.forkOptions.executable = 'javac'
+        options.compilerArgs = ['-XDignore.symbol.file=true']
+    }
+     */
+    compileOnly files('lib/javac7-1.7.0.jar')
+
+    testCompile 'junit:junit:latest.release'
+    testCompile 'org.ow2.asm:asm:latest.release'
+    testCompile 'org.ow2.asm:asm-util:latest.release'
+    testCompile 'org.assertj:assertj-core:2.4.1'
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        Bintray(MavenPublication) {
+            from components.java
+
+            artifact sourceJar {
+                classifier 'sources'
+            }
+        }
+    }
+}
+
+bintray {
+    user = 'jkschneider'
+    key = System.getenv('BINTRAY_KEY')
+    dryRun = false
+    publish = true
+    publications = ['Bintray']
+
+    pkg {
+        repo = 'maven'
+        name = 'java-power-assert'
+        vcsUrl = 'git@github.com:jkschneider/java-power-assert.git'
+        websiteUrl = 'https://github.com/jkschneider/java-power-assert'
+        issueTrackerUrl = 'https://github.com/jkschneider/java-power-assert/issues'
+        licenses = ['Apache-2.0']
+        labels = ['unit testing']
+        publicDownloadNumbers = true
+        version {
+            name = project.version
+            vcsTag = project.version
+        }
+    }
+}
