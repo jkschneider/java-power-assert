@@ -11,6 +11,16 @@ repositories {
     mavenCentral()
 }
 
+task compiler << {
+    println javax.tools.ToolProvider.getSystemJavaCompiler()
+}
+
+compileJava {
+    options.fork = true
+    options.forkOptions.executable = 'javac'
+//    options.compilerArgs = ['-XDignore.symbol.file=true']
+}
+
 dependencies {
     /*
     This dependency comes from lombok at https://projectlombok.org/ivyrepo/langtools/javac-1.7.0.jar. I thought that

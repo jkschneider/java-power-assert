@@ -1,5 +1,6 @@
 package org.powerassert;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class ExpressionRenderer {
@@ -72,7 +73,21 @@ public class ExpressionRenderer {
 	}
 
 	private String renderValue(Object value) {
-		String str = value == null ? "null" : value.toString();
+		String str;
+		if(value == null)
+			str = "null";
+		else if(value.getClass().isArray()) {
+			// string join
+			str = "[";
+			for(Object o: toArray(value)) {
+				str += renderValue(o) + ", ";
+			}
+			str = (str.length() > 1 ? str.substring(0, str.length()-2) : "") + "]";
+		}
+		else {
+			str = value.toString();
+		}
+
 		return showTypes && value != null ? str + " (" + value.getClass().getName() + ")" : str;
 	}
 
@@ -82,7 +97,7 @@ public class ExpressionRenderer {
 			line += ' ';
 		}
 		String prefix = line.substring(0, anchor);
-		String suffix = anchor > line.length() ? "" : line.substring(anchor);
+		String suffix = anchor + str.length() > line.length() ? "" : line.substring(anchor + str.length());
 		return prefix + str + suffix;
 	}
 
@@ -92,5 +107,18 @@ public class ExpressionRenderer {
 				return false;
 		}
 		return true;
+	}
+
+	private Object[] toArray(Object array) {
+		if (array.getClass().getComponentType().isPrimitive()) {
+			List<Object> list = new ArrayList<>();
+			for (int i = 0; i < Array.getLength(array); i++) {
+				list.add(Array.get(array, i));
+			}
+			return list.toArray();
+		}
+		else {
+			return (Object[]) array;
+		}
 	}
 }

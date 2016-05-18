@@ -1,20 +1,19 @@
 package org.powerassert;
 
+import java.io.IOException;
 import java.util.Set;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
-import com.sun.source.tree.*;
+import com.sun.source.tree.AssertTree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.tree.JCTree;
@@ -27,20 +26,29 @@ import com.sun.tools.javac.util.Name;
 public class PowerAssertProcessor extends AbstractProcessor {
 	private Trees trees;
 	private Context context;
+	private Messager messager;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
-		super.init(processingEnv);
+		if(!isInitialized()) {
+			super.init(processingEnv);
+		}
 		this.trees = Trees.instance(processingEnv);
 		this.context = ((JavacProcessingEnvironment) processingEnv).getContext();
+		this.messager = processingEnv.getMessager();
 	}
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		if(!roundEnv.processingOver()) {
 			for(Element element: roundEnv.getRootElements()) {
-				TreePath path = trees.getPath(element);
-				new PowerAssertScanner().scan(path, context);
+				try {
+					CharSequence source = ((Symbol.ClassSymbol) element).sourcefile.getCharContent(true);
+					TreePath path = trees.getPath(element);
+					new PowerAssertScanner(source, messager).scan(path, context);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
@@ -57,6 +65,13 @@ public class PowerAssertProcessor extends AbstractProcessor {
 class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 	TreeMaker treeMaker;
 	JavacElements elements;
+	Messager messager;
+	CharSequence rawSource;
+
+	public PowerAssertScanner(CharSequence rawSource, Messager messager) {
+		this.rawSource = rawSource;
+		this.messager = messager;
+	}
 
 	@Override
 	public TreePath scan(TreePath path, Context context) {
@@ -101,7 +116,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 						List.<JCTree.JCExpression>nil(),
 						qualifiedName("$org_powerassert_recorderRuntime", "recordExpression"),
 						List.of(
-							treeMaker.Literal(assertNode.getCondition().toString()),
+							treeMaker.Literal(source(assertNode.getCondition())),
 							instrumented,
 							treeMaker.Literal(assertNode.getCondition().getStartPosition())
 						)
@@ -125,34 +140,85 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 	public JCTree.JCExpression recordAllValues(JCTree.JCExpression expr) {
 		if(expr instanceof JCTree.JCBinary) {
 			JCTree.JCBinary binary = (JCTree.JCBinary) expr;
-			return treeMaker.Binary(
-					binary.getTag(),
-					recordValue(binary.getLeftOperand()),
-					recordValue(binary.getRightOperand())
+			return recordValue(
+					treeMaker.Binary(
+						binary.getTag(),
+						recordAllValues(binary.getLeftOperand()),
+						recordAllValues(binary.getRightOperand())
+					),
+					binary.getRightOperand().pos - 2
 			);
 		}
 		else if(expr instanceof JCTree.JCUnary) {
-			// TODO implement me!
+			JCTree.JCUnary unary = (JCTree.JCUnary) expr;
+			return recordValue(
+					treeMaker.Unary(
+						unary.getTag(),
+						recordAllValues(unary.getExpression())
+					),
+					unary.getExpression().pos - 1
+			);
 		}
-		else if(expr instanceof JCTree.JCTypeApply) {
-			// TODO implement me!
+		else if(expr instanceof JCTree.JCMethodInvocation) {
+			JCTree.JCMethodInvocation meth = (JCTree.JCMethodInvocation) expr;
+			return recordValue(
+					treeMaker.Apply(
+						meth.typeargs,
+						recordAllValues(meth.getMethodSelect()),
+						recordArgs(meth.args)
+					),
+					meth.getMethodSelect().pos + 1
+			);
+		}
+		else if(expr instanceof JCTree.JCIdent) {
+			return recordValue(expr, expr.pos);
+		}
+		else if(expr instanceof JCTree.JCFieldAccess) {
+			JCTree.JCFieldAccess field = (JCTree.JCFieldAccess) expr;
+			return recordValue(
+					treeMaker.Select(
+						recordAllValues(field.getExpression()),
+						field.name
+					),
+					expr.pos + 1);
+		}
+		else if(expr instanceof JCTree.JCNewClass) {
+			JCTree.JCNewClass newClass = (JCTree.JCNewClass) expr;
+			return treeMaker.NewClass(
+					recordAllValues(newClass.encl),
+					newClass.typeargs,
+					newClass.clazz,
+					recordArgs(newClass.args),
+					newClass.def
+			);
+		}
+		else if(expr instanceof JCTree.JCArrayAccess) {
+			JCTree.JCArrayAccess arrayAccess = (JCTree.JCArrayAccess) expr;
+			return recordValue(
+					treeMaker.Indexed(
+						recordAllValues(arrayAccess.getExpression()),
+						recordAllValues(arrayAccess.getIndex())
+					),
+					expr.pos
+			);
+		}
+		else if(expr instanceof JCTree.JCNewArray) {
+			JCTree.JCNewArray newArray = (JCTree.JCNewArray) expr;
+			return treeMaker.NewArray(
+					recordAllValues(newArray.getType()),
+					recordArgs(newArray.getDimensions()),
+					recordArgs(newArray.getInitializers())
+			);
 		}
 		return expr;
 	}
 
-	private JCTree.JCExpression recordValue(JCTree.JCExpression expr) {
+	private JCTree.JCExpression recordValue(JCTree.JCExpression expr, int anchor) {
 		return treeMaker.Apply(
 			List.<JCTree.JCExpression>nil(),
 			qualifiedName("$org_powerassert_recorderRuntime", "recordValue"),
-			List.of(expr, treeMaker.Literal(anchor(expr)))
+			List.of(expr, treeMaker.Literal(anchor))
 		);
-	}
-
-	private Integer anchor(JCTree.JCExpression expr) {
-		if(expr instanceof JCTree.JCMethodInvocation) {
-			return anchor(((JCTree.JCMethodInvocation) expr).getMethodSelect());
-		}
-		return expr.getStartPosition(); // this is an absolute position that will be later relativized
 	}
 
 	private JCTree.JCExpressionStatement completeRecording() {
@@ -199,5 +265,40 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 			}
 		}
 		return List.from(stats);
+	}
+
+	/**
+	 * @return the raw source of expr, extracted from the raw source itself since JCExpression's toString()
+	 * normalizes whitespace but positions still refer to the position in source prior to this normalization
+	 */
+	private CharSequence source(JCTree.JCExpression expr) {
+		String exprStr = expr.toString();
+		int sourcePos = expr.getStartPosition();
+
+		for(int exprPos = 0; exprPos < exprStr.length();) {
+			char exprChar = exprStr.charAt(exprPos);
+			char sourceChar = rawSource.charAt(sourcePos);
+
+			if(Character.isWhitespace(exprChar)) {
+				exprPos++;
+				continue;
+			}
+			if(Character.isWhitespace(sourceChar)) {
+				sourcePos++;
+				continue;
+			}
+			exprPos++;
+			sourcePos++;
+		}
+
+		return rawSource.subSequence(expr.getStartPosition(), sourcePos);
+	}
+
+	private List<JCTree.JCExpression> recordArgs(List<JCTree.JCExpression> args) {
+		JCTree.JCExpression[] recordedArgs = new JCTree.JCExpression[args.length()];
+		for(int i = 0; i < args.length(); i++) {
+			recordedArgs[i] = recordAllValues(args.get(i));
+		}
+		return List.from(recordedArgs);
 	}
 }

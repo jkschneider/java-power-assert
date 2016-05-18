@@ -26,7 +26,6 @@ public class RecorderRuntime {
 	public void recordExpression(String text, Boolean value, int anchor) {
 		for(RecordedValue recordedValue: recordedValues) {
 			recordedValue.relativizeAnchor(anchor);
-			System.out.println("recorded value @anchor:" + recordedValue.getAnchor() + ": " + value.toString());
 		}
 
 		RecordedExpression<Boolean> recordedExpr = new RecordedExpression<>(text, value, recordedValues);
