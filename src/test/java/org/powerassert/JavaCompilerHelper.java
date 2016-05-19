@@ -25,8 +25,10 @@ import java.util.regex.Pattern;
 import javax.annotation.processing.Processor;
 import javax.tools.*;
 
-import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.*;
+import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceClassVisitor;
+import org.objectweb.asm.util.TraceMethodVisitor;
 
 public class JavaCompilerHelper {
     List<SimpleJavaFileObject> sources = new ArrayList<>();
@@ -74,7 +76,8 @@ public class JavaCompilerHelper {
 				public CharSequence getCharContent(boolean ignoreEncodingErrors) { return sourceStr.trim(); }
             });
 
-			JavaCompiler.CompilationTask task = compiler.getTask(null, inMemoryClassFileManager, diagnostics, null, null, sources);
+			JavaCompiler.CompilationTask task = compiler.getTask(null, inMemoryClassFileManager, diagnostics,
+					Collections.singletonList("-g"), null, sources);
 			task.setProcessors(this.processors);
 			if(!task.call()) {
                 for(Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
@@ -100,8 +103,37 @@ public class JavaCompilerHelper {
     public void traceClass(String className) {
 		PrintWriter pw = new PrintWriter(System.out);
 		new ClassReader(inMemoryClassFileManager.classBytes(className)).accept(
-                new TraceClassVisitor(pw), ClassReader.SKIP_DEBUG);
+                new TraceClassVisitor(pw), ClassReader.SKIP_FRAMES);
     }
+
+	public void traceMethod(String className, final String method) {
+		new ClassReader(inMemoryClassFileManager.classBytes(className)).accept(
+				new ClassVisitor(Opcodes.ASM5) {
+					PrintWriter pw = new PrintWriter(System.out);
+					Textifier p = new Textifier();
+
+					@Override
+					public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+						if(name.equals(method)) {
+							p.visitMethod(access, name, desc, signature, exceptions);
+							return new TraceMethodVisitor(p);
+						}
+						return null;
+					}
+
+					@Override
+					public void visitEnd() {
+						p.visitClassEnd();
+						if (pw != null) {
+							p.print(pw);
+							pw.flush();
+						}
+					}
+				},
+				ClassReader.SKIP_FRAMES
+		);
+
+	}
 
 	public Object newInstance(String className) {
 		try {

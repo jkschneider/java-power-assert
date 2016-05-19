@@ -94,6 +94,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 				treeMaker.NewClass(null, List.<JCTree.JCExpression>nil(), powerAssertType,
 						List.<JCTree.JCExpression>nil(), null)
 		);
+		powerAssert.setPos(0);
 
 		JCTree.JCVariableDecl recorderRuntime = treeMaker.VarDef(
 				treeMaker.Modifiers(Flags.FINAL),
@@ -108,6 +109,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 						),
 						null)
 		);
+		recorderRuntime.setPos(0);
 
 		JCTree.JCExpression instrumented = recordAllValues(assertNode.getCondition());
 
@@ -122,6 +124,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 						)
 				)
 		);
+		recordExpr.setPos(assertNode.pos);
 
 		JCTree.JCBlock powerAssertBlock = treeMaker.Block(0, List.of(
 				powerAssert,
@@ -130,6 +133,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 				completeRecording(),
 				(JCTree.JCStatement) node)
 		);
+		powerAssertBlock.setPos(0);
 
 		JCTree.JCBlock parent = (JCTree.JCBlock) getCurrentPath().getParentPath().getLeaf();
 		parent.stats = replaceStatement(parent.getStatements(), (JCTree.JCAssert) node, powerAssertBlock);
@@ -142,10 +146,10 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 			JCTree.JCBinary binary = (JCTree.JCBinary) expr;
 			return recordValue(
 					treeMaker.Binary(
-						binary.getTag(),
-						recordAllValues(binary.getLeftOperand()),
-						recordAllValues(binary.getRightOperand())
-					),
+							binary.getTag(),
+							recordAllValues(binary.getLeftOperand()),
+							recordAllValues(binary.getRightOperand())
+					).setPos(binary.pos),
 					binary.getRightOperand().pos - 2
 			);
 		}
@@ -155,32 +159,44 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 					treeMaker.Unary(
 						unary.getTag(),
 						recordAllValues(unary.getExpression())
-					),
+					).setPos(unary.pos),
 					unary.getExpression().pos - 1
 			);
 		}
 		else if(expr instanceof JCTree.JCMethodInvocation) {
-			JCTree.JCMethodInvocation meth = (JCTree.JCMethodInvocation) expr;
+			JCTree.JCMethodInvocation method = (JCTree.JCMethodInvocation) expr;
 			return recordValue(
+					// oddly, methodSelect is expressed as a JCFieldAccess, and if we recurse through this expression,
+					// we will attempt to record the method name as a field access, which it is not... so do
+					// not recurse on method select
 					treeMaker.Apply(
-						meth.typeargs,
-						recordAllValues(meth.getMethodSelect()),
-						recordArgs(meth.args)
-					),
-					meth.getMethodSelect().pos + 1
+							method.typeargs,
+							method.getMethodSelect(),
+							recordArgs(method.args)
+					).setPos(method.pos),
+					method.getMethodSelect().pos + 1
 			);
 		}
 		else if(expr instanceof JCTree.JCIdent) {
-			return recordValue(expr, expr.pos);
+			String name = ((JCTree.JCIdent) expr).getName().toString();
+
+			// differentiate between class name identifiers and variable identifiers
+			if(elements.getTypeElement(name) == null && elements.getTypeElement("java.lang." + name) == null) {
+				return recordValue(expr, expr.pos);
+			}
+			return expr;
 		}
 		else if(expr instanceof JCTree.JCFieldAccess) {
 			JCTree.JCFieldAccess field = (JCTree.JCFieldAccess) expr;
-			return recordValue(
-					treeMaker.Select(
-						recordAllValues(field.getExpression()),
-						field.name
-					),
-					expr.pos + 1);
+			if(!(field.selected instanceof JCTree.JCLiteral)) {
+				return recordValue(
+						treeMaker.Select(
+								recordAllValues(field.getExpression()),
+								field.name
+						).setPos(field.pos),
+						expr.pos + 1);
+			}
+			return expr;
 		}
 		else if(expr instanceof JCTree.JCNewClass) {
 			JCTree.JCNewClass newClass = (JCTree.JCNewClass) expr;
@@ -190,7 +206,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 					newClass.clazz,
 					recordArgs(newClass.args),
 					newClass.def
-			);
+			).setPos(newClass.pos);
 		}
 		else if(expr instanceof JCTree.JCArrayAccess) {
 			JCTree.JCArrayAccess arrayAccess = (JCTree.JCArrayAccess) expr;
@@ -198,7 +214,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 					treeMaker.Indexed(
 						recordAllValues(arrayAccess.getExpression()),
 						recordAllValues(arrayAccess.getIndex())
-					),
+					).setPos(arrayAccess.pos),
 					expr.pos
 			);
 		}
@@ -208,7 +224,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 					recordAllValues(newArray.getType()),
 					recordArgs(newArray.getDimensions()),
 					recordArgs(newArray.getInitializers())
-			);
+			).setPos(newArray.pos);
 		}
 		return expr;
 	}
@@ -271,7 +287,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 	 * @return the raw source of expr, extracted from the raw source itself since JCExpression's toString()
 	 * normalizes whitespace but positions still refer to the position in source prior to this normalization
 	 */
-	private CharSequence source(JCTree.JCExpression expr) {
+	private String source(JCTree.JCExpression expr) {
 		String exprStr = expr.toString();
 		int sourcePos = expr.getStartPosition();
 
@@ -291,7 +307,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 			sourcePos++;
 		}
 
-		return rawSource.subSequence(expr.getStartPosition(), sourcePos);
+		return rawSource.subSequence(expr.getStartPosition(), sourcePos).toString();
 	}
 
 	private List<JCTree.JCExpression> recordArgs(List<JCTree.JCExpression> args) {

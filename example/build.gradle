@@ -10,8 +10,8 @@ repositories {
 configurations.testCompile.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 
 compileTestJava {
-//    options.fork = true
-//    options.forkOptions.executable = 'javac'
+    options.fork = true
+    options.forkOptions.executable = 'javac'
 }
 
 dependencies {

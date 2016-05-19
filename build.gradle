@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'nebula.nebula-release' version '4.0.1'
     id 'com.jfrog.bintray' version '1.6'
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
 group = 'io.jschneider'
@@ -21,6 +22,12 @@ compileJava {
 //    options.compilerArgs = ['-XDignore.symbol.file=true']
 }
 
+configurations {
+    shadedCompile
+}
+
+configurations.compileOnly.extendsFrom configurations.shadedCompile
+
 dependencies {
     /*
     This dependency comes from lombok at https://projectlombok.org/ivyrepo/langtools/javac-1.7.0.jar. I thought that
@@ -34,12 +41,26 @@ dependencies {
     }
      */
     compileOnly files('lib/javac7-1.7.0.jar')
+    shadedCompile 'commons-lang:commons-lang:2.6'
 
     testCompile 'junit:junit:latest.release'
     testCompile 'org.ow2.asm:asm:latest.release'
     testCompile 'org.ow2.asm:asm-util:latest.release'
     testCompile 'org.assertj:assertj-core:2.4.1'
 }
+
+// Relocated dependencies are removed from the generated pom
+shadowJar {
+    configurations = [project.configurations.shadedCompile]
+    classifier = null
+    dependencies {
+        include(dependency('commons-lang:commons-lang'))
+    }
+    relocate 'org.apache.commons.lang', 'org.powerassert.commons.lang'
+}
+
+jar.deleteAllActions()
+jar.dependsOn shadowJar
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava

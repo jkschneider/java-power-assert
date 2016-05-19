@@ -16,6 +16,29 @@ public class PowerAssertProcessorTest {
 	}
 
 	@Test
+	public void debugSymbols() {
+//		JavaCompilerHelper java2 = new JavaCompilerHelper(new PowerAssertProcessor());
+//		JavaCompilerHelper java2 = new JavaCompilerHelper();
+		JavaCompilerHelper java2 = new JavaCompilerHelper(new DebugProcessor());
+
+//		java2.compile(
+//				"public class A {\n" +
+//				"	@org.junit.Test public void mytest() {\n" +
+//				"      assert 1+1 == 3;\n" +
+//				"	}\n" +
+//				"}\n");
+
+		java2.compile(
+				"public class A {\n" +
+				"   @org.junit.Test public void mytest() {\n" +
+				"   	String a =\"abc\";\n" +
+				"	}\n" +
+				"}\n");
+
+		java2.traceMethod("A", "mytest");
+	}
+
+	@Test
 	public void identifiers() {
 		java.compile(
 				"public class A {" +
@@ -42,7 +65,7 @@ public class PowerAssertProcessorTest {
 				"}");
 
 		testFailsWithMessage("A", "test",
-				"1+ 1 == 3",
+				"1+ 1 == 3", // notice how whitespace is preserved in the output
 				" |    |",
 				" 2    false");
 	}
@@ -118,16 +141,17 @@ public class PowerAssertProcessorTest {
 
 		java.compile(
 				"public class A {" +
-						"	@org.junit.Test public void test() {" +
-						"      Data d = new Data();" +
-						"      assert d.field == \"def\";" +
-						"	}" +
-						"}");
+				"	@org.junit.Test public void test() {" +
+				"      Data d = new Data();" +
+				"      assert d.field == \"def\";" +
+				"	}" +
+				"}");
 
 		testFailsWithMessage("A", "test",
 				"d.field == \"def\"",
-				"  |      |",
-				"  abc    false");
+				"| |      |",
+				"| abc    false",
+				"Data[field=abc]");
 	}
 
 	@Test
@@ -140,11 +164,11 @@ public class PowerAssertProcessorTest {
 
 		java.compile(
 				"public class A {" +
-						"	@org.junit.Test public void test() {" +
-						"      String a = \"abc\";" +
-						"      assert new Data(a).field == \"def\";" +
-						"	}" +
-						"}");
+				"	@org.junit.Test public void test() {" +
+				"      String a = \"abc\";" +
+				"      assert new Data(a).field == \"def\";" +
+				"	}" +
+				"}");
 
 		testFailsWithMessage("A", "test",
 				"new Data(a).field == \"def\"",
@@ -189,6 +213,12 @@ public class PowerAssertProcessorTest {
 	@Ignore
 	@Test
 	public void ternary() {
+		// TODO
+	}
+
+	@Ignore
+	@Test
+	public void chainedMethodCalls() {
 		// TODO
 	}
 

@@ -1,5 +1,9 @@
 package org.powerassert;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -77,7 +81,7 @@ public class ExpressionRenderer {
 		if(value == null)
 			str = "null";
 		else if(value.getClass().isArray()) {
-			// string join
+			// recursive string join
 			str = "[";
 			for(Object o: toArray(value)) {
 				str += renderValue(o) + ", ";
@@ -85,7 +89,14 @@ public class ExpressionRenderer {
 			str = (str.length() > 1 ? str.substring(0, str.length()-2) : "") + "]";
 		}
 		else {
-			str = value.toString();
+			try {
+				if(value.getClass().getMethod("toString").getDeclaringClass() == Object.class) {
+					str = ToStringBuilder.reflectionToString(value, ToStringStyle.SHORT_PREFIX_STYLE);
+				}
+				else str = value.toString();
+			} catch (NoSuchMethodException e) {
+				str = value.toString();
+			}
 		}
 
 		return showTypes && value != null ? str + " (" + value.getClass().getName() + ")" : str;
@@ -102,6 +113,9 @@ public class ExpressionRenderer {
 	}
 
 	private Boolean fits(String line, String str, int anchor) {
+		if(str.length() > line.length())
+			return false;
+
 		for(char c: line.substring(anchor, anchor + str.length() + 1).toCharArray()) {
 			if(!Character.isWhitespace(c))
 				return false;
