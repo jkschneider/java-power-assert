@@ -1,4 +1,4 @@
-package org.powerassert;
+package org.powerassert.synthetic;
 
 public interface RecorderListener<T> {
 	void valueRecorded(RecordedValue recordedValue);

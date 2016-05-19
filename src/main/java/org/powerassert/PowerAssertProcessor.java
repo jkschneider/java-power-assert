@@ -84,8 +84,8 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 	public TreePath visitAssert(AssertTree node, Context context) {
 		JCTree.JCAssert assertNode = (JCTree.JCAssert) node;
 
-		JCTree.JCExpression powerAssertType = qualifiedName("org", "powerassert", "PowerAssert");
-		JCTree.JCExpression recorderRuntimeType = qualifiedName("org", "powerassert", "RecorderRuntime");
+		JCTree.JCExpression powerAssertType = qualifiedName("org", "powerassert", "synthetic", "PowerAssert");
+		JCTree.JCExpression recorderRuntimeType = qualifiedName("org", "powerassert", "synthetic", "RecorderRuntime");
 
 		JCTree.JCVariableDecl powerAssert = treeMaker.VarDef(
 				treeMaker.Modifiers(Flags.FINAL),
@@ -94,7 +94,6 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 				treeMaker.NewClass(null, List.<JCTree.JCExpression>nil(), powerAssertType,
 						List.<JCTree.JCExpression>nil(), null)
 		);
-		powerAssert.setPos(0);
 
 		JCTree.JCVariableDecl recorderRuntime = treeMaker.VarDef(
 				treeMaker.Modifiers(Flags.FINAL),
@@ -109,7 +108,6 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 						),
 						null)
 		);
-		recorderRuntime.setPos(0);
 
 		JCTree.JCExpression instrumented = recordAllValues(assertNode.getCondition());
 
@@ -124,7 +122,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 						)
 				)
 		);
-		recordExpr.setPos(assertNode.pos);
+		recordExpr.setPos(assertNode.getCondition().pos);
 
 		JCTree.JCBlock powerAssertBlock = treeMaker.Block(0, List.of(
 				powerAssert,
@@ -133,7 +131,6 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 				completeRecording(),
 				(JCTree.JCStatement) node)
 		);
-		powerAssertBlock.setPos(0);
 
 		JCTree.JCBlock parent = (JCTree.JCBlock) getCurrentPath().getParentPath().getLeaf();
 		parent.stats = replaceStatement(parent.getStatements(), (JCTree.JCAssert) node, powerAssertBlock);

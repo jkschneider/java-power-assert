@@ -1,4 +1,4 @@
-package org.powerassert;
+package org.powerassert.synthetic;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;

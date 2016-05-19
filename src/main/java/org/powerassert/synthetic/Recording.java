@@ -1,4 +1,4 @@
-package org.powerassert;
+package org.powerassert.synthetic;
 
 import java.util.List;
 

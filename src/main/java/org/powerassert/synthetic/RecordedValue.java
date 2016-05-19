@@ -1,4 +1,4 @@
-package org.powerassert;
+package org.powerassert.synthetic;
 
 public class RecordedValue {
 	private Object value;

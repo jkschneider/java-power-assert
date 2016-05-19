@@ -1,3 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.ow2.asm:asm:latest.release'
+        classpath 'org.ow2.asm:asm-util:latest.release'
+    }
+}
+
+import org.objectweb.asm.*
+
 plugins {
     id 'java'
     id 'maven-publish'
@@ -19,7 +32,11 @@ task compiler << {
 compileJava {
     options.fork = true
     options.forkOptions.executable = 'javac'
-//    options.compilerArgs = ['-XDignore.symbol.file=true']
+}
+
+compileTestJava {
+    options.fork = true
+    options.forkOptions.executable = 'javac'
 }
 
 configurations {
@@ -49,6 +66,30 @@ dependencies {
     testCompile 'org.assertj:assertj-core:2.4.1'
 }
 
+task markSynthetics << {
+    def main = project.convention.getPlugin(JavaPluginConvention).sourceSets.main as SourceSet
+    new File(main.output.classesDir, 'org/powerassert/synthetic').listFiles().each {
+        logger.info("marking $it.name as synthetic")
+
+        def cw = new ClassWriter(0)
+        def cv = new ClassVisitor(Opcodes.ASM5, cw) {
+            @Override
+            void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                super.visit(version, access + Opcodes.ACC_SYNTHETIC, name, signature, superName, interfaces)
+            }
+
+            @Override
+            MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                return super.visitMethod(access + Opcodes.ACC_SYNTHETIC, name, desc, signature, exceptions)
+            }
+        }
+        def cr = new ClassReader(it.bytes);
+        cr.accept(cv, 0)
+
+        it.bytes = cw.toByteArray()
+    }
+}
+
 // Relocated dependencies are removed from the generated pom
 shadowJar {
     configurations = [project.configurations.shadedCompile]
@@ -60,6 +101,7 @@ shadowJar {
 }
 
 jar.deleteAllActions()
+jar.dependsOn markSynthetics
 jar.dependsOn shadowJar
 
 task sourceJar(type: Jar) {

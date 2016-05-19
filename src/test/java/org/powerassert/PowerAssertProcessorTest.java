@@ -16,29 +16,6 @@ public class PowerAssertProcessorTest {
 	}
 
 	@Test
-	public void debugSymbols() {
-//		JavaCompilerHelper java2 = new JavaCompilerHelper(new PowerAssertProcessor());
-//		JavaCompilerHelper java2 = new JavaCompilerHelper();
-		JavaCompilerHelper java2 = new JavaCompilerHelper(new DebugProcessor());
-
-//		java2.compile(
-//				"public class A {\n" +
-//				"	@org.junit.Test public void mytest() {\n" +
-//				"      assert 1+1 == 3;\n" +
-//				"	}\n" +
-//				"}\n");
-
-		java2.compile(
-				"public class A {\n" +
-				"   @org.junit.Test public void mytest() {\n" +
-				"   	String a =\"abc\";\n" +
-				"	}\n" +
-				"}\n");
-
-		java2.traceMethod("A", "mytest");
-	}
-
-	@Test
 	public void identifiers() {
 		java.compile(
 				"public class A {" +
