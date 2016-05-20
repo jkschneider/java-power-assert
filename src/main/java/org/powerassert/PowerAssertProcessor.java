@@ -1,13 +1,5 @@
 package org.powerassert;
 
-import java.io.IOException;
-import java.util.Set;
-
-import javax.annotation.processing.*;
-import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
-
 import com.sun.source.tree.AssertTree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
@@ -21,6 +13,13 @@ import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
+
+import javax.annotation.processing.*;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
+import java.io.IOException;
+import java.util.Set;
 
 @SupportedAnnotationTypes("*")
 public class PowerAssertProcessor extends AbstractProcessor {
@@ -234,6 +233,17 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 					recordArgs(newArray.getDimensions(), expr),
 					recordArgs(newArray.getInitializers(), expr)
 			).setPos(newArray.pos);
+		}
+		else if(expr instanceof JCTree.JCConditional) {
+			JCTree.JCConditional conditional = (JCTree.JCConditional) expr;
+			return recordValue(
+					treeMaker.Conditional(
+							recordAllValues(conditional.getCondition(), expr),
+							recordAllValues(conditional.getTrueExpression(), expr),
+							recordAllValues(conditional.getFalseExpression(), expr)
+					).setPos(conditional.pos),
+					expr.pos
+			);
 		}
 		return expr;
 	}

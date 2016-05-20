@@ -1,11 +1,10 @@
 package org.powerassert;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 
 public class PowerAssertProcessorTest {
 	JavaCompilerHelper java;
@@ -187,10 +186,21 @@ public class PowerAssertProcessorTest {
 				"            1  1    false");
 	}
 
-	@Ignore
 	@Test
 	public void ternary() {
-		// TODO
+		java.compile(
+				"public class A {" +
+						"	@org.junit.Test public void test() {" +
+						"      boolean b = false;" +
+						"      boolean a = true;" +
+						"      assert \"a\".contains(\"b\") ? a : b;" + // extraordinarily contrived, I know...
+						"	}" +
+						"}");
+
+		testFailsWithMessage("A", "test",
+				"\"a\".contains(\"b\") ? a : b",
+				"    |             |     |",
+				"    false         false false");
 	}
 
 	@Test
