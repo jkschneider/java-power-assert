@@ -7,6 +7,7 @@ import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 
 import com.sun.source.tree.AssertTree;
 import com.sun.source.util.TreePath;
@@ -168,7 +169,7 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 					// not recurse on method select
 					treeMaker.Apply(
 							method.typeargs,
-							method.getMethodSelect(),
+							recordAllValues(method.getMethodSelect()),
 							recordArgs(method.args)
 					).setPos(method.pos),
 					method.getMethodSelect().pos + 1
@@ -185,12 +186,15 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 		}
 		else if(expr instanceof JCTree.JCFieldAccess) {
 			JCTree.JCFieldAccess field = (JCTree.JCFieldAccess) expr;
-			if(!(field.selected instanceof JCTree.JCLiteral)) {
+			if(!(field.selected instanceof JCTree.JCLiteral) &&
+					// this condition seems hacky and probably won't cover all cases
+					!(field.selected instanceof JCTree.JCIdent && isType(((JCTree.JCIdent) field.selected).name.toString()))) {
+				JCTree.JCExpression recordedField = treeMaker.Select(
+						recordAllValues(field.getExpression()),
+						field.name
+				).setPos(field.pos);
 				return recordValue(
-						treeMaker.Select(
-								recordAllValues(field.getExpression()),
-								field.name
-						).setPos(field.pos),
+						recordedField,
 						expr.pos + 1);
 			}
 			return expr;
@@ -305,6 +309,10 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 		}
 
 		return rawSource.subSequence(expr.getStartPosition(), sourcePos).toString();
+	}
+
+	private boolean isType(String name) {
+		return elements.getTypeElement(name) != null || elements.getTypeElement("java.lang." + name) != null;
 	}
 
 	private List<JCTree.JCExpression> recordArgs(List<JCTree.JCExpression> args) {

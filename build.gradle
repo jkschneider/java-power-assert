@@ -101,7 +101,7 @@ shadowJar {
 }
 
 jar.deleteAllActions()
-jar.dependsOn markSynthetics
+//jar.dependsOn markSynthetics
 jar.dependsOn shadowJar
 
 task sourceJar(type: Jar) {

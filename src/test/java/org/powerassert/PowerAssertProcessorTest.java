@@ -193,10 +193,35 @@ public class PowerAssertProcessorTest {
 		// TODO
 	}
 
-	@Ignore
+	@Test
+	public void nestedCalls() {
+		java.compile(
+				"public class A {\n" +
+				"	public <T> T ident(T t) {\n" +
+				"		return t;\n" +
+				"	}\n" +
+				"	@org.junit.Test public void test() {\n" +
+				"		String a = \"a\";\n" +
+				"		assert ident(a.substring(0)) == \"bb\";\n" +
+				"	}\n" +
+				"}\n");
+
+		testFailsWithMessage("A", "test", "message");
+	}
+
 	@Test
 	public void chainedMethodCalls() {
-		// TODO
+		java.compile(
+				"public class A {" +
+				"	@org.junit.Test public void test() {" +
+				"      assert \"abc\".substring(0).contains(\"d\");" +
+				"	}" +
+				"}");
+
+		testFailsWithMessage("A", "test",
+				"\"abc\".substring(0).contains(\"d\")",
+				"      |",
+				"      a");
 	}
 
 	private void testFailsWithMessage(String clazz, String test, String... messageLines) {
