@@ -4,6 +4,52 @@ import org.junit.Test;
 
 public class PowerAssertExampleTest {
 	@Test
+	public void methodInvocation() {
+		assert "abc".contains("d");
+
+		/*
+		"abc".contains("d")
+			  |
+			  false
+		 */
+	}
+
+	@Test
+	public void chainedMethodInvocation() {
+		assert "abc".substring(0).contains("d");
+
+		/*
+		"abc".substring(0).contains("d")
+			  |            |
+			  abc          false
+		 */
+	}
+
+	@Test
+	public void methodInvocationInArguments() {
+		assert Character.isWhitespace("abc".charAt(0));
+
+		/*
+		Character.isWhitespace("abc".charAt(0))
+				  |                  |
+				  false              a
+		 */
+	}
+
+	@Test
+	public void propertyRead() {
+		Data d = new Data("abc");
+		assert d.field.equals("def");
+
+		/*
+		d.field.equals("def")
+		| |     |
+		| abc   false
+		Data[field=abc]
+		 */
+	}
+
+	@Test
 	public void identifiers() {
 		String a = "abc";
 		assert a == "def";
@@ -40,28 +86,6 @@ public class PowerAssertExampleTest {
 	}
 
 	@Test
-	public void methodInvocation() {
-		assert "abc".contains("d");
-
-		/*
-		"abc".contains("d")
-			  |
-			  false
-		 */
-	}
-
-	@Test
-	public void methodInvocationInArguments() {
-		assert Character.isWhitespace("abc".charAt(0));
-
-		/*
-		Character.isWhitespace("abc".charAt(0))
-				  |                  |
-				  false              a
-		 */
-	}
-
-	@Test
 	public void nullValues() {
 		String a = null;
 		assert "null".equals(a);
@@ -72,12 +96,6 @@ public class PowerAssertExampleTest {
 			   false  null
 		 */
 	}
-
-//	@Test
-//	public void propertyRead() {
-//		Data d = new Data("abc");
-//		assert d.field.equals("def");
-//	}
 
 	@Test
 	public void arrayAccess() {

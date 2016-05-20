@@ -197,7 +197,7 @@ public class PowerAssertProcessorTest {
 	public void nestedCalls() {
 		java.compile(
 				"public class A {\n" +
-				"	public <T> T ident(T t) {\n" +
+				"	private <T> T ident(T t) {\n" +
 				"		return t;\n" +
 				"	}\n" +
 				"	@org.junit.Test public void test() {\n" +
@@ -206,7 +206,10 @@ public class PowerAssertProcessorTest {
 				"	}\n" +
 				"}\n");
 
-		testFailsWithMessage("A", "test", "message");
+		testFailsWithMessage("A", "test",
+				"ident(a.substring(0)) == \"bb\"",
+				" |    | |              |",
+				" a    a a              false");
 	}
 
 	@Test
@@ -220,8 +223,8 @@ public class PowerAssertProcessorTest {
 
 		testFailsWithMessage("A", "test",
 				"\"abc\".substring(0).contains(\"d\")",
-				"      |",
-				"      a");
+				"      |            |",
+				"      abc          false");
 	}
 
 	private void testFailsWithMessage(String clazz, String test, String... messageLines) {

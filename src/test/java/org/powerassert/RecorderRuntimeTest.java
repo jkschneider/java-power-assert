@@ -1,10 +1,10 @@
 package org.powerassert;
 
+import static org.assertj.core.api.Assertions.fail;
+
 import org.junit.Test;
 import org.powerassert.synthetic.PowerAssert;
 import org.powerassert.synthetic.RecorderRuntime;
-
-import static org.assertj.core.api.Assertions.fail;
 
 public class RecorderRuntimeTest {
 	@Test

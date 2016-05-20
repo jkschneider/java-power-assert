@@ -1,11 +1,10 @@
 package org.powerassert.synthetic;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
-
 import java.lang.reflect.Array;
 import java.util.*;
+
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 
 public class ExpressionRenderer {
 	boolean showTypes;
