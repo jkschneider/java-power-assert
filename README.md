@@ -1,5 +1,8 @@
 # Power Assertions for Java
 
+[![Build Status](https://travis-ci.org/jkschneider/java-power-assert.svg?branch=master)](https://travis-ci.org/jkschneider/java-power-assert.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/jkschneider/java-power-assert/badge.svg?branch=master)](https://coveralls.io/github/jkschneider/java-power-assert?branch=master)
+
 Power assertions (a.k.a. diagrammed assertions) augment your assertion failures with information about values produced during the evaluation of a condition, and presents them in an easily digestible form.
 
 For example, the assertion
