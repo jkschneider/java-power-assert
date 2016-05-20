@@ -5,12 +5,12 @@ import org.junit.Test;
 public class PowerAssertExampleTest {
 	@Test
 	public void methodInvocation() {
-		assert "abc".contains("d");
+		assert Character.isWhitespace("abc".charAt(0));
 
 		/*
-		"abc".contains("d")
-			  |
-			  false
+		Character.isWhitespace("abc".charAt(0))
+				  |                  |
+				  false              a
 		 */
 	}
 
@@ -22,17 +22,6 @@ public class PowerAssertExampleTest {
 		"abc".substring(0).contains("d")
 			  |            |
 			  abc          false
-		 */
-	}
-
-	@Test
-	public void methodInvocationInArguments() {
-		assert Character.isWhitespace("abc".charAt(0));
-
-		/*
-		Character.isWhitespace("abc".charAt(0))
-				  |                  |
-				  false              a
 		 */
 	}
 
