@@ -43,7 +43,7 @@ configurations {
     shadedCompile
 }
 
-configurations.compileOnly.extendsFrom configurations.shadedCompile
+configurations.compile.extendsFrom configurations.shadedCompile
 
 dependencies {
     /*
@@ -139,6 +139,22 @@ bintray {
         version {
             name = project.version
             vcsTag = project.version
+        }
+    }
+}
+
+publishing {
+    publications {
+        nebula(MavenPublication) {
+            pom.withXml {
+                asNode()
+                        .dependencies
+                        .dependency
+                        .findAll {
+                            ['commons-lang'].contains(it.artifactId.text())
+                        }
+                        .each { it.parent().remove(it) }
+            }
         }
     }
 }
