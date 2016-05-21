@@ -1,6 +1,6 @@
 # Power Assertions for Java
 
-[![Build Status](https://travis-ci.org/jkschneider/java-power-assert.svg?branch=master)](https://travis-ci.org/jkschneider/java-power-assert.svg?branch=master)
+[![Build Status](https://travis-ci.org/jkschneider/java-power-assert.svg?branch=master)](https://travis-ci.org/jkschneider/java-power-assert)
 [![Coverage Status](https://coveralls.io/repos/github/jkschneider/java-power-assert/badge.svg?branch=master)](https://coveralls.io/github/jkschneider/java-power-assert?branch=master)
 [![Apache 2.0](https://img.shields.io/github/license/jkschneider/java-power-assert.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
@@ -34,7 +34,7 @@ testCompile 'io.jschneider:java-power-assert:latest.release'
 <dependency>
   <groupId>io.jschneider</groupId>
   <artifactId>java-power-assert</artifactId>
-  <version>0.2</version>
+  <version>0.4</version>
 </dependency>
 ```
 
