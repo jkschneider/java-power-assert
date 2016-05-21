@@ -25,20 +25,6 @@ repositories {
     mavenCentral()
 }
 
-task compiler << {
-    println javax.tools.ToolProvider.getSystemJavaCompiler()
-}
-
-compileJava {
-    options.fork = true
-    options.forkOptions.executable = 'javac'
-}
-
-compileTestJava {
-    options.fork = true
-    options.forkOptions.executable = 'javac'
-}
-
 configurations {
     shadedCompile
 }
@@ -46,18 +32,8 @@ configurations {
 configurations.compile.extendsFrom configurations.shadedCompile
 
 dependencies {
-    /*
-    This dependency comes from lombok at https://projectlombok.org/ivyrepo/langtools/javac-1.7.0.jar. I thought that
-    passing ignore.symbol.file=true to javac would allow compilation against the internal AST API, but it still fails for
-    some inexplicable reason. Somehow IntelliJ compiles against the internal API with no problem without this dependency...
+    compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 
-    compileJava {
-        options.fork = true
-        options.forkOptions.executable = 'javac'
-        options.compilerArgs = ['-XDignore.symbol.file=true']
-    }
-     */
-    compileOnly files('lib/javac7-1.7.0.jar')
     shadedCompile 'commons-lang:commons-lang:2.6'
 
     testCompile 'junit:junit:latest.release'

@@ -9,12 +9,7 @@ repositories {
 
 configurations.testCompile.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 
-compileTestJava {
-    options.fork = true
-    options.forkOptions.executable = 'javac'
-}
-
 dependencies {
-    testCompile 'io.jschneider:java-power-assert:latest.integration'
+    compile 'io.jschneider:java-power-assert:latest.integration'
     testCompile 'junit:junit:4.11'
 }
