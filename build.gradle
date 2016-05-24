@@ -140,6 +140,7 @@ publishing {
                 node.children().last() + {
                     resolveStrategy = Closure.DELEGATE_FIRST
 
+                    name 'java-power-assert'
                     description 'power assertions for java'
                     url 'https://github.com/jkschneider/java-power-assert'
                     scm {
