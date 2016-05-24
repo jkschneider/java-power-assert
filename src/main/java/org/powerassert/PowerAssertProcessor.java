@@ -355,10 +355,6 @@ class PowerAssertScanner extends TreePathScanner<TreePath, Context> {
 		return rawSource.subSequence(expr.getStartPosition(), sourcePos).toString();
 	}
 
-	private boolean isType(String name) {
-		return elements.getTypeElement(name) != null || elements.getTypeElement("java.lang." + name) != null;
-	}
-
 	private List<JCTree.JCExpression> recordArgs(List<JCTree.JCExpression> args, JCTree.JCExpression parent) {
 		JCTree.JCExpression[] recordedArgs = new JCTree.JCExpression[args.length()];
 		for(int i = 0; i < args.length(); i++) {
