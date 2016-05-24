@@ -84,6 +84,11 @@ task sourceJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
+task javadocJar (type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
 publishing {
     publications {
         Bintray(MavenPublication) {
@@ -91,6 +96,10 @@ publishing {
 
             artifact sourceJar {
                 classifier 'sources'
+            }
+
+            artifact javadocJar {
+                classifier 'javadoc'
             }
         }
     }
@@ -121,15 +130,37 @@ bintray {
 
 publishing {
     publications {
-        nebula(MavenPublication) {
+        Bintray(MavenPublication) {
             pom.withXml {
-                asNode()
-                        .dependencies
-                        .dependency
-                        .findAll {
-                            ['commons-lang'].contains(it.artifactId.text())
-                        }
+                def node = asNode()
+                node.dependencies.dependency.findAll { ['commons-lang'].contains(it.artifactId.text()) }
                         .each { it.parent().remove(it) }
+                node.children().last() + {
+                    resolveStrategy = Closure.DELEGATE_FIRST
+
+                    description 'power assertions for java'
+                    url 'https://github.com/jkschneider/java-power-assert'
+                    scm {
+                        url 'https://github.com/jkschneider/java-power-assert.git'
+                        connection 'scm:git@github.com:jkschneider/java-power-assert.git'
+                        developerConnection 'git@github.com:jkschneider/java-power-assert.git'
+                        tag 'HEAD'
+                    }
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/license/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id 'jkschneider'
+                            name 'Jon Schneider'
+                            email 'jkschneider@gmail.com'
+                        }
+                    }
+                }
             }
         }
     }
