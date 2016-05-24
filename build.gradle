@@ -15,6 +15,7 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.6.3'
     id 'nebula.nebula-release' version '4.0.1'
     id 'com.jfrog.bintray' version '1.6'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
@@ -172,5 +173,3 @@ jacocoTestReport {
         xml.enabled = true
     }
 }
-
-tasks.release.dependsOn jacoco
