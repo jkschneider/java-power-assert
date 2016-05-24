@@ -5,6 +5,8 @@
 [![Apache 2.0](https://img.shields.io/github/license/jkschneider/java-power-assert.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 Power assertions (a.k.a. diagrammed assertions) augment your assertion failures with information about values produced during the evaluation of a condition, and presents them in an easily digestible form.
+Power assertions are a popular feature of [Spock](https://github.com/spockframework/spock) (and later the whole [Groovy](https://github.com/apache/groovy) language independently of Spock),
+[ScalaTest](http://www.scalatest.org/), and [Expecty](https://github.com/pniederw/expecty).
 
 For example, the assertion
 
@@ -17,7 +19,15 @@ produces this diagram:
     Character.isWhitespace("abc".charAt(0))
               |                  |
               false              a
-              
+
+## Limitations
+
+Currently, java-power-assert only works on code compiled with javac. This means it works in IntelliJ IDEA, gradle, etc.
+
+Notably, it does *not* work in Eclipse which uses the Eclipse Compiler for Java (ECJ). There is
+ a known solution for ECJ that involves running Eclipse with a Java agent that intercepts the ECJ generated AST prior to bytecode generation (and indeed this is what
+ [Lombok](https://github.com/rzwitserloot/lombok) does). It is currently unknown whether it is possible to access the ECJ AST from a regular annotation processor.
+
 ## Getting started
 
 All you need to do is include java-power-assert as a dependency and turn on annotation processing in your IDE.
@@ -34,7 +44,7 @@ testCompile 'io.jschneider:java-power-assert:latest.release'
 <dependency>
   <groupId>io.jschneider</groupId>
   <artifactId>java-power-assert</artifactId>
-  <version>0.4</version>
+  <version>0.5</version>
 </dependency>
 ```
 

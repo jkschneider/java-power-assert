@@ -18,6 +18,7 @@ import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.util.Set;
 
@@ -32,13 +33,22 @@ public class PowerAssertProcessor extends AbstractProcessor {
 		if(!isInitialized()) {
 			super.init(processingEnv);
 		}
-		this.trees = Trees.instance(processingEnv);
-		this.context = ((JavacProcessingEnvironment) processingEnv).getContext();
 		this.messager = processingEnv.getMessager();
+
+		try {
+			this.trees = Trees.instance(processingEnv);
+			this.context = ((JavacProcessingEnvironment) processingEnv).getContext();
+		} catch(NoClassDefFoundError ignored) {
+			this.messager.printMessage(Diagnostic.Kind.WARNING,
+					"Unable to generate power assertions because javac is not compiling the code");
+		}
 	}
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+		if(trees == null)
+			return false;
+
 		if(!roundEnv.processingOver()) {
 			for(Element element: roundEnv.getRootElements()) {
 				try {
