@@ -80,7 +80,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 				JCTree.JCExpression recorded = treeMaker.Apply(
 						List.<JCTree.JCExpression>nil(),
 						qualifiedName("org", "powerassert", "synthetic", "junit", "Assert", methodName),
-						List.from(recordEach(meth.getArguments()))
+						recordEach(meth.getArguments())
 				);
 
 				JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
@@ -110,7 +110,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 		for (JCTree.JCExpression arg : exprs) {
 			recorded.add(recordAllValues(arg, null));
 		}
-		return List.from(recorded);
+		return List.from(recorded.toArray(new JCTree.JCExpression[recorded.size()]));
 	}
 
 	private static String methodName(JCTree.JCMethodInvocation meth) {
