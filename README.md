@@ -35,6 +35,7 @@ produces this diagram:
                       |  [1, 2, 4]
                       [1, 2, 3]
 
+Regular JUnit assert output is suppressed in favor of the more descriptive diagram.
 
 ## Limitations
 
