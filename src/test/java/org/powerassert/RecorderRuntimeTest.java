@@ -19,14 +19,12 @@ package org.powerassert;
 import static org.assertj.core.api.Assertions.fail;
 
 import org.junit.Test;
-import org.powerassert.synthetic.PowerAssert;
 import org.powerassert.synthetic.RecorderRuntime;
 
 public class RecorderRuntimeTest {
 	@Test
 	public void recordingOfFalseExpressionThrowsAssertion() {
-		PowerAssert pa = new PowerAssert();
-		RecorderRuntime runtime = new RecorderRuntime(pa.getListener());
+		RecorderRuntime runtime = new RecorderRuntime();
 
 		try {
 			runtime.recordExpression(

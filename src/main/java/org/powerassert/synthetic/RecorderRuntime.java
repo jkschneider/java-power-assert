@@ -20,21 +20,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecorderRuntime {
-	private RecorderListener<Boolean> listener;
-	private List<RecordedExpression<Boolean>> recordedExprs = new ArrayList<>();
 	private List<RecordedValue> recordedValues = new ArrayList<>();
 
-	public RecorderRuntime(RecorderListener<Boolean> listener) {
-		this.listener = listener;
+	public boolean recordValue(boolean value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
+		recordedValues.add(recordedValue);
+		return value;
 	}
 
-	public void resetValues() {
-		recordedValues = new ArrayList<>();
+	public byte recordValue(byte value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
+		recordedValues.add(recordedValue);
+		return value;
+	}
+
+	public char recordValue(char value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
+		recordedValues.add(recordedValue);
+		return value;
+	}
+
+	public double recordValue(double value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
+		recordedValues.add(recordedValue);
+		return value;
+	}
+
+	public double recordValue(float value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
+		recordedValues.add(recordedValue);
+		return value;
+	}
+
+	public int recordValue(int value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
+		recordedValues.add(recordedValue);
+		return value;
+	}
+
+	public long recordValue(long value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
+		recordedValues.add(recordedValue);
+		return value;
 	}
 
 	public <U> U recordValue(U value, int anchor) {
 		RecordedValue recordedValue = new RecordedValue(value, anchor);
-		listener.valueRecorded(recordedValue);
+		recordedValues.add(recordedValue);
+		return value;
+	}
+
+	public short recordValue(short value, int anchor) {
+		RecordedValue recordedValue = new RecordedValue(value, anchor);
 		recordedValues.add(recordedValue);
 		return value;
 	}
@@ -45,14 +82,9 @@ public class RecorderRuntime {
 		}
 
 		RecordedExpression<Boolean> recordedExpr = new RecordedExpression<>(text, value, recordedValues);
-		listener.expressionRecorded(recordedExpr);
-		recordedExprs.add(recordedExpr);
-	}
 
-	public Boolean completeRecording() {
-		RecordedExpression<Boolean> lastRecorded = recordedExprs.get(0);
-		Recording<Boolean> recording = new Recording<>(lastRecorded.getValue(), recordedExprs);
-		listener.recordingCompleted(recording);
-		return recording.getValue();
+		if(!recordedExpr.getValue()) {
+			throw new AssertionError("\n\n" + new ExpressionRenderer(false).render(recordedExpr));
+		}
 	}
 }

@@ -20,6 +20,22 @@ produces this diagram:
               |                  |
               false              a
 
+JUnit `assertXXX` invocations are also diagrammed. The assertion
+
+```java
+int[] a = new int[] { 1, 2, 3 };
+int[] b = new int[] { 1, 2, 4 };
+assertArrayEquals(a, b);
+```
+
+produces this diagram:
+
+    assertArrayEquals(a, b)
+                      |  |
+                      |  [1, 2, 4]
+                      [1, 2, 3]
+
+
 ## Limitations
 
 Currently, java-power-assert only works on code compiled with javac. This means it works in IntelliJ IDEA, gradle, etc.
@@ -28,7 +44,7 @@ Notably, it does *not* work in Eclipse which uses the Eclipse Compiler for Java 
  a known solution for ECJ that involves running Eclipse with a Java agent that intercepts the ECJ generated AST prior to bytecode generation (and indeed this is what
  [Lombok](https://github.com/rzwitserloot/lombok) does). It is currently unknown whether it is possible to access the ECJ AST from a regular annotation processor.
  
-Also, power asserts are only generated for assert expressions using the assert keyword, though it can be trivially expanded to diagram JUnit style `assertXXX` method calls, Hamcrest and assertj `assertThat` style chains, etc. Contributions welcome if you beat me to it!
+Also, in the same way we diagram JUnit assertions, it can be trivially expanded to diagram Hamcrest and assertj `assertThat` style chains, etc. Contributions welcome if you beat me to it!
 
 ## Getting started
 

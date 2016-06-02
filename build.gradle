@@ -19,6 +19,7 @@ plugins {
     id 'nebula.nebula-release' version '4.0.1'
     id 'com.jfrog.bintray' version '1.6'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'nebula.optional-base' version '3.1.0'
 }
 
 group = 'io.jschneider'
@@ -36,9 +37,10 @@ configurations.compile.extendsFrom configurations.shadedCompile
 dependencies {
     compile files("${System.getProperty('java.home')}/../lib/tools.jar")
 
+    compile 'junit:junit:latest.release', optional
+
     shadedCompile 'commons-lang:commons-lang:2.6'
 
-    testCompile 'junit:junit:latest.release'
     testCompile 'org.ow2.asm:asm:latest.release'
     testCompile 'org.ow2.asm:asm-util:latest.release'
     testCompile 'org.assertj:assertj-core:2.4.1'

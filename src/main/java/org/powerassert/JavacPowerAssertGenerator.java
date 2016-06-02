@@ -1,6 +1,8 @@
 package org.powerassert;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -8,6 +10,8 @@ import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 
 import com.sun.source.tree.AssertTree;
+import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
@@ -21,7 +25,7 @@ import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
 
-public class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> implements PowerAssertGenerator {
+class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> implements PowerAssertGenerator {
 	private TreeMaker treeMaker;
 	private JavacElements elements;
 	private CharSequence rawSource;
@@ -59,65 +63,119 @@ public class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context
 		return false;
 	}
 
+	private static java.util.List<String> junitAsserts = Arrays.asList("assertEquals", "assertNotEquals",
+			"assertArrayEquals", "assertTrue", "assertFalse", "assertSame", "assertNotSame", "assertNull",
+			"assertNotNull");
+
+	@Override
+	public TreePath visitMethodInvocation(MethodInvocationTree node, Context context) {
+		JCTree.JCMethodInvocation meth = (JCTree.JCMethodInvocation) node;
+		Tree parent = getCurrentPath().getParentPath().getLeaf();
+
+		if(parent instanceof JCTree.JCStatement) {
+			JCTree.JCStatement statement = (JCTree.JCStatement) parent;
+			String methodName = methodName(meth);
+
+			if(junitAsserts.contains(methodName)) {
+				JCTree.JCExpression recorded = treeMaker.Apply(
+						List.<JCTree.JCExpression>nil(),
+						qualifiedName("org", "powerassert", "synthetic", "junit", "Assert", methodName),
+						List.from(recordEach(meth.getArguments()))
+				);
+
+				JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
+						treeMaker.Apply(
+								List.<JCTree.JCExpression>nil(),
+								qualifiedName("$org_powerassert_recorderRuntime", "recordExpression"),
+								List.of(
+										treeMaker.Literal(source(meth)),
+										recorded,
+										treeMaker.Literal(meth.getStartPosition())
+								)
+						)
+				);
+
+				// so that we don't disrupt IDE debugging, give the instrumented expression the same position as the original
+				instrumented.setPos(statement.pos);
+
+				return replaceWithInstrumented(statement, instrumented);
+			}
+		}
+
+		return super.visitMethodInvocation(node, context);
+	}
+
+	private List<JCTree.JCExpression> recordEach(List<JCTree.JCExpression> exprs) {
+		java.util.List<JCTree.JCExpression> recorded = new ArrayList<>();
+		for (JCTree.JCExpression arg : exprs) {
+			recorded.add(recordAllValues(arg, null));
+		}
+		return List.from(recorded);
+	}
+
+	private static String methodName(JCTree.JCMethodInvocation meth) {
+		JCTree.JCExpression methodSelect = meth.getMethodSelect();
+		if(methodSelect instanceof JCTree.JCIdent) {
+			return ((JCTree.JCIdent) methodSelect).name.toString();
+		}
+		else if(methodSelect instanceof JCTree.JCFieldAccess) {
+			return ((JCTree.JCFieldAccess) methodSelect).name.toString();
+		}
+		return null;
+	}
+
 	@Override
 	public TreePath visitAssert(AssertTree node, Context context) {
-		JCTree.JCAssert assertNode = (JCTree.JCAssert) node;
+		JCTree.JCAssert assertStatement = (JCTree.JCAssert) node;
+		JCTree.JCExpression assertCondition = assertStatement.getCondition();
 
-		JCTree.JCExpression powerAssertType = qualifiedName("org", "powerassert", "synthetic", "PowerAssert");
-		JCTree.JCExpression recorderRuntimeType = qualifiedName("org", "powerassert", "synthetic", "RecorderRuntime");
-
-		JCTree.JCVariableDecl powerAssert = treeMaker.VarDef(
-				treeMaker.Modifiers(Flags.FINAL),
-				name("$org_powerassert_powerAssert"), // name that likely won't collide with any other
-				powerAssertType,
-				treeMaker.NewClass(null, List.<JCTree.JCExpression>nil(), powerAssertType,
-						List.<JCTree.JCExpression>nil(), null)
-		);
-
-		JCTree.JCVariableDecl recorderRuntime = treeMaker.VarDef(
-				treeMaker.Modifiers(Flags.FINAL),
-				name("$org_powerassert_recorderRuntime"), // name that likely won't collide with any other
-				recorderRuntimeType,
-				treeMaker.NewClass(null, List.<JCTree.JCExpression>nil(), recorderRuntimeType,
-						List.<JCTree.JCExpression>of(
-								treeMaker.Apply(List.<JCTree.JCExpression>nil(),
-										qualifiedName("$org_powerassert_powerAssert", "getListener"),
-										List.<JCTree.JCExpression>nil()
-								)
-						),
-						null)
-		);
-
-		JCTree.JCExpression instrumented = recordAllValues(assertNode.getCondition(), null);
-
-		JCTree.JCExpressionStatement recordExpr = treeMaker.Exec(
+		JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
 				treeMaker.Apply(
 						List.<JCTree.JCExpression>nil(),
 						qualifiedName("$org_powerassert_recorderRuntime", "recordExpression"),
 						List.of(
-								treeMaker.Literal(source(assertNode.getCondition())),
-								instrumented,
-								treeMaker.Literal(assertNode.getCondition().getStartPosition())
+								treeMaker.Literal(source(assertCondition)),
+								recordAllValues(assertCondition, null),
+								treeMaker.Literal(assertCondition.getStartPosition())
 						)
 				)
 		);
-		recordExpr.setPos(assertNode.getCondition().pos);
 
-		JCTree.JCBlock powerAssertBlock = treeMaker.Block(0, List.of(
-				powerAssert,
-				recorderRuntime,
-				recordExpr,
-				completeRecording(),
-				(JCTree.JCStatement) node)
-		);
+		// so that we don't disrupt IDE debugging, give the instrumented expression the same position as the original
+		instrumented.setPos(assertCondition.pos);
 
-		JCTree.JCBlock parent = (JCTree.JCBlock) getCurrentPath().getParentPath().getLeaf();
-		parent.stats = replaceStatement(parent.getStatements(), (JCTree.JCAssert) node, powerAssertBlock);
-
-		return null; // no need to call super because we are visiting the assert condition manually
+		return replaceWithInstrumented(assertStatement, instrumented);
 	}
 
-	public JCTree.JCExpression recordAllValues(JCTree.JCExpression expr, JCTree.JCExpression parent) {
+	private TreePath replaceWithInstrumented(JCTree.JCStatement statement, JCTree.JCExpressionStatement instrumented) {
+		TreePath parent = getCurrentPath().getParentPath();
+		while(parent != null && !(parent.getLeaf() instanceof JCTree.JCBlock)) {
+			parent = parent.getParentPath();
+		}
+
+		if(parent == null) {
+			// TODO is this case possible?
+			return null;
+		}
+
+		JCTree.JCBlock containingBlock = (JCTree.JCBlock) parent.getLeaf();
+		JCTree.JCBlock powerAssertBlock = treeMaker.Block(0, List.of(newRecorderRuntime(), instrumented));
+		containingBlock.stats = replaceStatement(containingBlock.getStatements(), statement, powerAssertBlock);
+
+		return null;
+	}
+
+	private JCTree.JCVariableDecl newRecorderRuntime() {
+		JCTree.JCExpression recorderRuntimeType = qualifiedName("org", "powerassert", "synthetic", "RecorderRuntime");
+		return treeMaker.VarDef(
+					treeMaker.Modifiers(Flags.FINAL),
+					name("$org_powerassert_recorderRuntime"), // name that likely won't collide with any other
+					recorderRuntimeType,
+					treeMaker.NewClass(null, List.<JCTree.JCExpression>nil(), recorderRuntimeType, List.<JCTree.JCExpression>nil(), null)
+			);
+	}
+
+	private JCTree.JCExpression recordAllValues(JCTree.JCExpression expr, JCTree.JCExpression parent) {
 		if(expr instanceof JCTree.JCBinary) {
 			JCTree.JCBinary binary = (JCTree.JCBinary) expr;
 			return recordValue(
@@ -236,16 +294,6 @@ public class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context
 		);
 	}
 
-	private JCTree.JCExpressionStatement completeRecording() {
-		return treeMaker.Exec(
-				treeMaker.Apply(
-					List.<JCTree.JCExpression>nil(),
-					qualifiedName("$org_powerassert_recorderRuntime", "completeRecording"),
-					List.<JCTree.JCExpression>nil()
-				)
-		);
-	}
-
 	private JCTree.JCExpression qualifiedName(String... name) {
 		JCTree.JCExpression prior = treeMaker.Ident(elements.getName(name[0]));
 		for(int i = 1; i < name.length; i++) {
@@ -256,19 +304,6 @@ public class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context
 
 	private Name name(String name) {
 		return elements.getName(name);
-	}
-
-	/**
-	 * For debugging purposes only
-	 */
-	@SuppressWarnings("unused")
-	private JCTree.JCStatement debugPrint(JCTree.JCExpression expr) {
-		return treeMaker.Exec(
-				treeMaker.Apply(List.<JCTree.JCExpression>nil(),
-					qualifiedName("System", "out", "println"),
-					List.of(expr)
-				)
-		);
 	}
 
 	private List<JCTree.JCStatement> replaceStatement(List<JCTree.JCStatement> list, JCTree.JCStatement replace, JCTree.JCStatement with) {

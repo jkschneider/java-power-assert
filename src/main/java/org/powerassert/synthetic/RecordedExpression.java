@@ -23,6 +23,11 @@ public class RecordedExpression<T> {
 	private T value;
 	private List<RecordedValue> values;
 
+	/**
+	 * @param text the original text of the expression under evaluation
+	 * @param value the value of the evaluated expression
+	 * @param values intermediate values recorded as the expression is being evaluated
+	 */
 	public RecordedExpression(String text, T value, List<RecordedValue> values) {
 		this.text = text;
 		this.value = value;
