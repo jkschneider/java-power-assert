@@ -5,7 +5,7 @@ import org.junit.Before;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-abstract class AbstractAssertTest {
+public abstract class AbstractAssertTest {
 	JavaCompilerHelper java;
 
 	@Before
