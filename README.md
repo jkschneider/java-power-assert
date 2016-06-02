@@ -43,7 +43,7 @@ Regular JUnit assert output is suppressed in favor of the more descriptive diagr
 
 #### Non-Goals
 
-java-power-assert does not change the semantics of equality in Java. Every statement that is replaced by java-power-assert will yield the same result as if it were not applied. In other words, if you turn off annotation processing during your build process or in your IDE, you can expect your tests to pass or fail just as they would if java-power-assert's annotation processing was doing its magic, you just would not see diagrammed output.
+java-power-assert does not change the semantics of equality in Java. Every power-asserted statement will yield the same result as if it were left unchanged. In other words, if you turn off annotation processing during your build process or in your IDE, you can expect your tests to pass or fail just as they would if java-power-assert's annotation processing was doing its magic, you just would not see diagrammed output.
 
 ## Limitations
 
