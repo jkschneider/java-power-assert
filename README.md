@@ -8,7 +8,9 @@ Power assertions (a.k.a. diagrammed assertions) augment your assertion failures 
 Power assertions are a popular feature of [Spock](https://github.com/spockframework/spock) (and later the whole [Groovy](https://github.com/apache/groovy) language independently of Spock),
 [ScalaTest](http://www.scalatest.org/), and [Expecty](https://github.com/pniederw/expecty).
 
-For example, the assertion
+#### Java `assert` keyword
+
+The plain java assert keyword is replaced with a diagrammed assertion. For example, the assertion
 
 ```java
 assert Character.isWhitespace("abc".charAt(0));
@@ -19,6 +21,8 @@ produces this diagram:
     Character.isWhitespace("abc".charAt(0))
               |                  |
               false              a
+
+#### JUnit
 
 JUnit `assertXXX` invocations are also diagrammed. The assertion
 
@@ -36,6 +40,10 @@ produces this diagram:
                       [1, 2, 3]
 
 Regular JUnit assert output is suppressed in favor of the more descriptive diagram.
+
+#### Non-Goals
+
+java-power-assert does not change the semantics of equality in Java. Every statement that is replaced by java-power-assert will yield the same result as if it were not applied. In other words, if you turn off annotation processing during your build process or in your IDE, you can expect your tests to pass or fail just as they would if java-power-assert's annotation processing was doing its magic, you just would not see diagrammed output.
 
 ## Limitations
 
