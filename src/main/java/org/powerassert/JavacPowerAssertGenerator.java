@@ -10,6 +10,7 @@ import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 
 import com.sun.source.tree.AssertTree;
+import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
@@ -68,6 +69,12 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 			"assertNotNull");
 
 	@Override
+	public TreePath visitImport(ImportTree node, Context context) {
+		// TODO distinguish between hamcrest and assertj here...
+		return super.visitImport(node, context);
+	}
+
+	@Override
 	public TreePath visitMethodInvocation(MethodInvocationTree node, Context context) {
 		JCTree.JCMethodInvocation meth = (JCTree.JCMethodInvocation) node;
 		Tree parent = getCurrentPath().getParentPath().getLeaf();
@@ -80,6 +87,30 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 				JCTree.JCExpression recorded = treeMaker.Apply(
 						List.<JCTree.JCExpression>nil(),
 						qualifiedName("org", "powerassert", "synthetic", "junit", "Assert", methodName),
+						recordEach(meth.getArguments())
+				);
+
+				JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
+						treeMaker.Apply(
+								List.<JCTree.JCExpression>nil(),
+								qualifiedName("$org_powerassert_recorderRuntime", "recordExpression"),
+								List.of(
+										treeMaker.Literal(source(meth)),
+										recorded,
+										treeMaker.Literal(meth.getStartPosition())
+								)
+						)
+				);
+
+				// so that we don't disrupt IDE debugging, give the instrumented expression the same position as the original
+				instrumented.setPos(statement.pos);
+
+				return replaceWithInstrumented(statement, instrumented);
+			}
+			else if("assertThat".equals(methodName)) {
+				JCTree.JCExpression recorded = treeMaker.Apply(
+						List.<JCTree.JCExpression>nil(),
+						qualifiedName("org", "powerassert", "synthetic", "hamcrest", "MatcherAssert", methodName),
 						recordEach(meth.getArguments())
 				);
 
@@ -217,7 +248,15 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 			// differentiate between class name identifiers and variable identifiers
 			boolean staticMethodTarget = elements.getTypeElement(name) != null || elements.getTypeElement("java.lang." + name) != null;
 
-			if(!staticMethodTarget && !(parent instanceof JCTree.JCMethodInvocation)) {
+			boolean isPartOfMethodName = parent instanceof JCTree.JCMethodInvocation;
+			if(isPartOfMethodName) {
+				for (JCTree.JCExpression arg : ((JCTree.JCMethodInvocation) parent).args) {
+					if(expr == arg)
+						isPartOfMethodName = false;
+				}
+			}
+
+			if(!staticMethodTarget && !isPartOfMethodName) {
 				return recordValue(expr, expr.pos);
 			}
 			return expr;

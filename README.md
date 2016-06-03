@@ -41,6 +41,24 @@ produces this diagram:
 
 Regular JUnit assert output is suppressed in favor of the more descriptive diagram.
 
+#### Hamcrest
+
+But wait, there's more! Hamcrest `assertThat` invocations are also diagrammed. The assertion
+
+```java
+Integer a = 2;
+assertThat(1, equalTo(a));
+```
+
+produces this diagram:
+
+    assertThat(1, equalTo(a))
+                   |      |
+                   <2>    2
+
+Regular Hamcrest assert output is suppressed in favor of the more descriptive diagram, however, the `Matcher` itself
+is diagrammed, so sophisticated descriptions will still be in the output.
+
 #### Non-Goals
 
 java-power-assert does not change the semantics of equality in Java. Every power-asserted statement will yield the same result as if it were left unchanged. In other words, if you turn off annotation processing during your build process or in your IDE, you can expect your tests to pass or fail just as they would if java-power-assert's annotation processing was doing its magic, you just would not see diagrammed output.
@@ -53,7 +71,7 @@ Notably, it does *not* work in Eclipse which uses the Eclipse Compiler for Java 
  a known solution for ECJ that involves running Eclipse with a Java agent that intercepts the ECJ generated AST prior to bytecode generation (and indeed this is what
  [Lombok](https://github.com/rzwitserloot/lombok) does). It is currently unknown whether it is possible to access the ECJ AST from a regular annotation processor.
  
-Also, in the same way we diagram JUnit assertions, it can be trivially expanded to diagram Hamcrest and assertj `assertThat` style chains, etc. Contributions welcome if you beat me to it!
+Also, in the same way we diagram JUnit and Hamcrest assertions, we could trivially expand to assertj `assertThat` style chains. Contributions welcome if you beat me to it!
 
 ## Getting started
 
