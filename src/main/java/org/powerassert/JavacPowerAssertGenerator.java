@@ -231,9 +231,6 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 		else if(expr instanceof JCTree.JCMethodInvocation) {
 			JCTree.JCMethodInvocation method = (JCTree.JCMethodInvocation) expr;
 			return recordValue(
-					// oddly, methodSelect is expressed as a JCFieldAccess, and if we recurse through this expression,
-					// we will attempt to record the method name as a field access, which it is not... so do
-					// not recurse on method select
 					treeMaker.Apply(
 							method.typeargs,
 							recordAllValues(method.getMethodSelect(), expr),

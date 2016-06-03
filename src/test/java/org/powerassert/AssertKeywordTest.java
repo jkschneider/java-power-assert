@@ -16,7 +16,6 @@
 
 package org.powerassert;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class AssertKeywordTest extends AbstractAssertTest {

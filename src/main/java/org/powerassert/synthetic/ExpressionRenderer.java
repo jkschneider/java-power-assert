@@ -37,11 +37,16 @@ public class ExpressionRenderer {
 			else break;
 		}
 
-		String intro = recordedExpr.getText().trim().replaceAll(";$", ""); // strip trailing semicolons
+		String intro = recordedExpr.getText().trim()
+				.replaceAll(";$", ""); // strip trailing semicolons
+		Map<Integer, Integer> strippedWhitespace = strippedWhitespaceUpToColumn(intro);
+		intro = intro.replaceAll("\n\\s+", " ");
+
 		List<String> lines = new ArrayList<>();
 
 		for(RecordedValue recordedValue: filterAndSortByAnchor(recordedExpr.getValues())) {
-			placeValue(lines, recordedValue.getValue(), recordedValue.getAnchor() - offset);
+			int offsetAnchor = recordedValue.getAnchor() - offset;
+			placeValue(lines, recordedValue.getValue(), offsetAnchor - strippedWhitespace.get(offsetAnchor));
 		}
 
 		lines.add(0, intro);
@@ -51,6 +56,33 @@ public class ExpressionRenderer {
 			rendered += line + "\n";
 		}
 		return rendered;
+	}
+
+	/**
+	 * Help count how much newline and margin whitespace we have stripped up to a particular index so we know
+	 * how to offset anchors
+	 */
+	Map<Integer, Integer> strippedWhitespaceUpToColumn(String intro) {
+		Map<Integer, Integer> stripped = new TreeMap<>();
+		boolean countingWhitespace = false;
+		int col = 0;
+		int count = 0;
+		for (char c : intro.toCharArray()) {
+			if(c == '\n' && !countingWhitespace) {
+				// we don't count the first newline, as this will be replaced with a space
+				// (yielding the same column width in terms of characters)
+				countingWhitespace = true;
+			}
+			else if(countingWhitespace) {
+				if (Character.isWhitespace(c))
+					count++;
+				else
+					countingWhitespace = false;
+			}
+			stripped.put(col, count);
+			col++;
+		}
+		return stripped;
 	}
 
 	private Iterable<RecordedValue> filterAndSortByAnchor(List<RecordedValue> recordedValues) {
