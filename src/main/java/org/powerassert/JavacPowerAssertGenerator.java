@@ -245,15 +245,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 			// differentiate between class name identifiers and variable identifiers
 			boolean staticMethodTarget = elements.getTypeElement(name) != null || elements.getTypeElement("java.lang." + name) != null;
 
-			boolean isPartOfMethodName = parent instanceof JCTree.JCMethodInvocation;
-			if(isPartOfMethodName) {
-				for (JCTree.JCExpression arg : ((JCTree.JCMethodInvocation) parent).args) {
-					if(expr == arg)
-						isPartOfMethodName = false;
-				}
-			}
-
-			if(!staticMethodTarget && !isPartOfMethodName) {
+			if(!staticMethodTarget && !isPartOfMethodName(expr, parent)) {
 				return recordValue(expr, expr.pos);
 			}
 			return expr;
@@ -266,7 +258,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 						field.name
 				).setPos(field.pos);
 
-				if(parent != null && parent instanceof JCTree.JCMethodInvocation) {
+				if(isPartOfMethodName(expr, parent)) {
 					// when the parent is a method invocation, this is not a true "field access", so don't attempt
 					// to record the value... instead the recording of the result of the method invocation will capture
 					// its output
@@ -320,6 +312,17 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 			);
 		}
 		return expr;
+	}
+
+	private boolean isPartOfMethodName(JCTree.JCExpression expr, JCTree.JCExpression parent) {
+		boolean isPartOfMethodName = parent instanceof JCTree.JCMethodInvocation;
+		if(isPartOfMethodName) {
+			for (JCTree.JCExpression arg : ((JCTree.JCMethodInvocation) parent).args) {
+				if(expr == arg)
+					return false;
+			}
+		}
+		return isPartOfMethodName;
 	}
 
 	private JCTree.JCExpression recordValue(JCTree.JCExpression expr, int anchor) {

@@ -37,6 +37,24 @@ public class AssertKeywordTest extends AbstractAssertTest {
 	}
 
 	@Test
+	public void staticFieldReference() {
+		java.compile("public class Constants { public static int CONST = 1; }");
+		java.compile(
+				"public class A {\n" +
+				"   public boolean compare(int a, int b) { return a == b; }\n" +
+				"	\n" +
+				"	@org.junit.Test public void test() {\n" +
+				"      assert compare(Constants.CONST, 2);\n" +
+				"	}\n" +
+				"}");
+
+		testFailsWithMessage("A", "test",
+				"compare(Constants.CONST, 2)",
+				" |                |",
+				" false            1");
+	}
+
+	@Test
 	public void binaryExpression() {
 		java.compile(
 				"public class A {" +
