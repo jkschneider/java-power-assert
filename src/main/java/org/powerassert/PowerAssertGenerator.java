@@ -8,6 +8,7 @@ public interface PowerAssertGenerator {
 
 	/**
 	 * @return true if the generator successfully generated power asserts, false otherwise
+	 * @param element - the element to scan
 	 */
 	boolean scan(Element element);
 }

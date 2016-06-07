@@ -99,7 +99,7 @@ public class JavaCompilerHelper {
 		Matcher pkgMatcher = Pattern.compile("\\s*package\\s+([\\w\\.]+)").matcher(sourceStr);
 		String pkg = pkgMatcher.find() ? pkgMatcher.group(1) + "." : "";
 
-		Matcher classMatcher = Pattern.compile("\\s*(class|interface)\\s+(\\w+)").matcher(sourceStr);
+		Matcher classMatcher = Pattern.compile("\\s*(class|interface|enum)\\s+(\\w+)").matcher(sourceStr);
 		return classMatcher.find() ? pkg + classMatcher.group(2) : null;
     }
 

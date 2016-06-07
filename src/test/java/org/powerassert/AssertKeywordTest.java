@@ -18,6 +18,8 @@ package org.powerassert;
 
 import org.junit.Test;
 
+import java.io.File;
+
 public class AssertKeywordTest extends AbstractAssertTest {
 	@Test
 	public void identifiers() {
@@ -52,6 +54,25 @@ public class AssertKeywordTest extends AbstractAssertTest {
 				"compare(Constants.CONST, 2)",
 				" |                |",
 				" false            1");
+	}
+
+	@Test
+	public void enumReference() {
+		java.compile("public enum Constants { CONST }");
+		java.compile(
+				"public class A {\n" +
+				"   public boolean compare(int a, int b) { return a == b; }\n" +
+				"	\n" +
+				"	@org.junit.Test public void test() {\n" +
+				"      assert \"DNE\".equals(Constants.CONST.toString());\n" +
+				"	}\n" +
+				"}"
+		);
+
+		testFailsWithMessage("A", "test",
+				"\"DNE\".equals(Constants.CONST.toString())",
+				"      |                |     |",
+				"      false            CONST CONST");
 	}
 
 	@Test
