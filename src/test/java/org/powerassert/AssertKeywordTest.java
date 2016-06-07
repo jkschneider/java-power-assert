@@ -18,8 +18,6 @@ package org.powerassert;
 
 import org.junit.Test;
 
-import java.io.File;
-
 public class AssertKeywordTest extends AbstractAssertTest {
 	@Test
 	public void identifiers() {
@@ -57,22 +55,36 @@ public class AssertKeywordTest extends AbstractAssertTest {
 	}
 
 	@Test
-	public void enumReference() {
-		java.compile("public enum Constants { CONST }");
+	public void typeReferenceInAnotherPackageWithImport() {
 		java.compile(
-				"public class A {\n" +
-				"   public boolean compare(int a, int b) { return a == b; }\n" +
-				"	\n" +
-				"	@org.junit.Test public void test() {\n" +
-				"      assert \"DNE\".equals(Constants.CONST.toString());\n" +
-				"	}\n" +
-				"}"
-		);
+				"package mypack;\n" +
+				"public enum Constants { CONST }");
 
-		testFailsWithMessage("A", "test",
-				"\"DNE\".equals(Constants.CONST.toString())",
-				"      |                |     |",
-				"      false            CONST CONST");
+		// both classes will fail compilation with "cannot find symbol: variable Constants" if type identification
+		// does not work correctly
+
+		java.compile(
+				"import mypack.*;\n" + // wildcard import
+				"public class A {\n" +
+				"	@org.junit.Test public void test() {\n" +
+				"      assert Constants.CONST == Constants.CONST;\n" +
+				"	}\n" +
+				"}");
+
+		java.compile(
+				"import mypack.Constants;\n" + // specific import
+				"public class B {\n" +
+				"	@org.junit.Test public void test() {\n" +
+				"      assert Constants.CONST == Constants.CONST;\n" +
+				"	}\n" +
+				"}");
+
+		java.compile(
+				"public class C {\n" +
+				"	@org.junit.Test public void test() {\n" +
+				"      assert Integer.valueOf(0).intValue() == 0;\n" +
+				"	}\n" +
+				"}");
 	}
 
 	@Test

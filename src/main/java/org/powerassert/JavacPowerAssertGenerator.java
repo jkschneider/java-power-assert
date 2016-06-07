@@ -10,7 +10,6 @@ import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 
 import com.sun.source.tree.AssertTree;
-import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
@@ -27,6 +26,8 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
 
 class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> implements PowerAssertGenerator {
+	private static final String RECORDER_RUNTIME = "$rr";
+
 	private TreeMaker treeMaker;
 	private JavacElements elements;
 	private CharSequence rawSource;
@@ -69,12 +70,6 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 			"assertNotNull");
 
 	@Override
-	public TreePath visitImport(ImportTree node, Context context) {
-		// TODO distinguish between hamcrest and assertj here...
-		return super.visitImport(node, context);
-	}
-
-	@Override
 	public TreePath visitMethodInvocation(MethodInvocationTree node, Context context) {
 		JCTree.JCMethodInvocation meth = (JCTree.JCMethodInvocation) node;
 		Tree parent = getCurrentPath().getParentPath().getLeaf();
@@ -93,7 +88,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 				JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
 						treeMaker.Apply(
 								List.<JCTree.JCExpression>nil(),
-								qualifiedName("$org_powerassert_recorderRuntime", "recordExpression"),
+								qualifiedName(RECORDER_RUNTIME, "recordExpression"),
 								List.of(
 										treeMaker.Literal(source(meth)),
 										recorded,
@@ -117,7 +112,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 				JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
 						treeMaker.Apply(
 								List.<JCTree.JCExpression>nil(),
-								qualifiedName("$org_powerassert_recorderRuntime", "recordExpression"),
+								qualifiedName(RECORDER_RUNTIME, "recordExpression"),
 								List.of(
 										treeMaker.Literal(source(meth)),
 										recorded,
@@ -163,7 +158,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 		JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
 				treeMaker.Apply(
 						List.<JCTree.JCExpression>nil(),
-						qualifiedName("$org_powerassert_recorderRuntime", "recordExpression"),
+						qualifiedName(RECORDER_RUNTIME, "recordExpression"),
 						List.of(
 								treeMaker.Literal(source(assertCondition)),
 								recordAllValues(assertCondition, null),
@@ -200,7 +195,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 		JCTree.JCExpression recorderRuntimeType = qualifiedName("org", "powerassert", "synthetic", "RecorderRuntime");
 		return treeMaker.VarDef(
 					treeMaker.Modifiers(Flags.FINAL),
-					name("$org_powerassert_recorderRuntime"), // name that likely won't collide with any other
+					name(RECORDER_RUNTIME), // name that likely won't collide with any other
 					recorderRuntimeType,
 					treeMaker.NewClass(null, List.<JCTree.JCExpression>nil(), recorderRuntimeType, List.<JCTree.JCExpression>nil(), null)
 			);
@@ -240,10 +235,13 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 			);
 		}
 		else if(expr instanceof JCTree.JCIdent) {
-			String name = ((JCTree.JCIdent) expr).getName().toString();
+			Name name = ((JCTree.JCIdent) expr).getName();
+			JCTree.JCCompilationUnit cu = (JCTree.JCCompilationUnit) getCurrentPath().getCompilationUnit();
 
 			// differentiate between class name identifiers and variable identifiers
-			boolean staticMethodTarget = elements.getTypeElement(name) != null || elements.getTypeElement("java.lang." + name) != null;
+			boolean staticMethodTarget = cu.starImportScope.getElementsByName(name).iterator().hasNext() ||
+					cu.namedImportScope.getElementsByName(name).iterator().hasNext() ||
+					elements.getTypeElement(name.toString()) != null;
 
 			if(!staticMethodTarget && !isPartOfMethodName(expr, parent)) {
 				return recordValue(expr, expr.pos);
@@ -328,7 +326,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 	private JCTree.JCExpression recordValue(JCTree.JCExpression expr, int anchor) {
 		return treeMaker.Apply(
 			List.<JCTree.JCExpression>nil(),
-			qualifiedName("$org_powerassert_recorderRuntime", "recordValue"),
+			qualifiedName(RECORDER_RUNTIME, "recordValue"),
 			List.of(expr, treeMaker.Literal(anchor))
 		);
 	}

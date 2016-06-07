@@ -44,32 +44,6 @@ public class JavaCompilerHelper {
 		this.processors = Arrays.asList(processors);
 	}
 
-    public void compileToClassesDir(String sourceStr, File classesDir) {
-        byte[] bytecodes = compile(sourceStr);
-        String[] nameParts = fullyQualifiedName(sourceStr).split("\\.");
-
-        File dir;
-        if(nameParts.length > 1) {
-			String name = "";
-			for(int i = 0; i < nameParts.length-1; i++) {
-				name += nameParts[i];
-				if(i < nameParts.length-2) {
-					name += "/";
-				}
-			}
-			dir = new File(classesDir, name);
-		}
-        else
-            dir = new File(classesDir, nameParts[0]);
-
-        dir.mkdirs();
-		try(FileOutputStream fos = new FileOutputStream(new File(dir, nameParts[-1]))) {
-			fos.write(bytecodes);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
     public byte[] compile(final String sourceStr) {
         String className = fullyQualifiedName(sourceStr);
 

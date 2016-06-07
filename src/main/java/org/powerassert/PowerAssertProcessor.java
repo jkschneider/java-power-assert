@@ -26,7 +26,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
-@SupportedAnnotationTypes("org.junit.Test")
+@SupportedAnnotationTypes("*")
 public class PowerAssertProcessor extends AbstractProcessor {
 	private JavacPowerAssertGenerator javacGenerator = new JavacPowerAssertGenerator();
 
