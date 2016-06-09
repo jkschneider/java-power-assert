@@ -36,6 +36,26 @@ public class AssertKeywordTest extends AbstractAssertTest {
 				"abc");
 	}
 
+	/**
+	 * This will take several seconds to run on Oracle JDK 1.8.0_60. It is faster on JDK 7 and
+	 * JDK 1.8.0_92. Gradle and IntelliJ builds can still appear to hang on 1.8.0_92.
+	 */
+	@Test
+	public void longMethodChain() {
+		java.compile(
+				"public class Data {" +
+				"   public Data ident() { return this; }" +
+				"}");
+
+		java.compile(
+				"public class A {" +
+				"	@org.junit.Test public void test() {" +
+				"      Data d = new Data();" +
+				"      assert d.ident().ident().ident().ident().ident().ident() != null;" +
+				"	}" +
+				"}");
+	}
+
 	@Test
 	public void staticFieldReference() {
 		java.compile("public class Constants { public static int CONST = 1; }");

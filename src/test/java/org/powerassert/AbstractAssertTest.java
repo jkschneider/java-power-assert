@@ -10,7 +10,7 @@ public abstract class AbstractAssertTest {
 
 	@Before
 	public void setup() {
-		java = new JavaCompilerHelper(new PowerAssertProcessor());
+		java = new JavaCompilerHelper(/*new PowerAssertProcessor()*/);
 	}
 
 	void testFailsWithMessage(String clazz, String test, String... messageLines) {

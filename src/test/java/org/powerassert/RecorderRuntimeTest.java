@@ -27,7 +27,7 @@ public class RecorderRuntimeTest {
 		RecorderRuntime runtime = new RecorderRuntime();
 
 		try {
-			runtime.recordExpression(
+			runtime.powerAssert(
 					"\"abc\".substring(0).contains(\"a\")",
 					runtime.recordValue(runtime.recordValue("abc".substring(0), 6).contains("d"), 19),
 					0);

@@ -76,7 +76,7 @@ public class RecorderRuntime {
 		return value;
 	}
 
-	public void recordExpression(String text, Boolean value, int anchor) {
+	public synchronized void powerAssert(String text, Boolean value, int anchor) {
 		for(RecordedValue recordedValue: recordedValues) {
 			recordedValue.relativizeAnchor(anchor);
 		}
@@ -86,5 +86,8 @@ public class RecorderRuntime {
 		if(!recordedExpr.getValue()) {
 			throw new AssertionError("\n\n" + new ExpressionRenderer(false).render(recordedExpr));
 		}
+
+		// reset for next assertion
+		recordedValues.clear();
 	}
 }

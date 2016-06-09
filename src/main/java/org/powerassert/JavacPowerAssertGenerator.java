@@ -1,8 +1,7 @@
 package org.powerassert;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -88,7 +87,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 				JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
 						treeMaker.Apply(
 								List.<JCTree.JCExpression>nil(),
-								qualifiedName(RECORDER_RUNTIME, "recordExpression"),
+								qualifiedName(RECORDER_RUNTIME, "powerAssert"),
 								List.of(
 										treeMaker.Literal(source(meth)),
 										recorded,
@@ -112,7 +111,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 				JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
 						treeMaker.Apply(
 								List.<JCTree.JCExpression>nil(),
-								qualifiedName(RECORDER_RUNTIME, "recordExpression"),
+								qualifiedName(RECORDER_RUNTIME, "powerAssert"),
 								List.of(
 										treeMaker.Literal(source(meth)),
 										recorded,
@@ -158,7 +157,7 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 		JCTree.JCExpressionStatement instrumented = treeMaker.Exec(
 				treeMaker.Apply(
 						List.<JCTree.JCExpression>nil(),
-						qualifiedName(RECORDER_RUNTIME, "recordExpression"),
+						qualifiedName(RECORDER_RUNTIME, "powerAssert"),
 						List.of(
 								treeMaker.Literal(source(assertCondition)),
 								recordAllValues(assertCondition, null),
@@ -202,7 +201,10 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 	}
 
 	private JCTree.JCExpression recordAllValues(JCTree.JCExpression expr, JCTree.JCExpression parent) {
-		if(expr instanceof JCTree.JCBinary) {
+		if(expr == null) {
+			return null;
+		}
+		else if(expr instanceof JCTree.JCBinary) {
 			JCTree.JCBinary binary = (JCTree.JCBinary) expr;
 			return recordValue(
 					treeMaker.Binary(
@@ -241,7 +243,8 @@ class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context> imple
 			// differentiate between class name identifiers and variable identifiers
 			boolean staticMethodTarget = cu.starImportScope.getElementsByName(name).iterator().hasNext() ||
 					cu.namedImportScope.getElementsByName(name).iterator().hasNext() ||
-					elements.getTypeElement(name.toString()) != null;
+					elements.getTypeElement(name.toString()) != null ||
+					(cu.getPackageName() != null && elements.getTypeElement(cu.getPackageName().toString() + "." + name.toString()) != null);
 
 			if(!staticMethodTarget && !isPartOfMethodName(expr, parent)) {
 				return recordValue(expr, expr.pos);
