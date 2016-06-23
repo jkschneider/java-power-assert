@@ -37,6 +37,12 @@ public class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context
 	private Context context;
 	private Messager messager;
 
+	private boolean limitDepthOnJava8;
+
+	public JavacPowerAssertGenerator(boolean limitDepthOnJava8) {
+		this.limitDepthOnJava8 = limitDepthOnJava8;
+	}
+
 	@Override
 	public void init(ProcessingEnvironment env) {
 		this.trees = Trees.instance(env);
@@ -371,7 +377,7 @@ public class JavacPowerAssertGenerator extends TreePathScanner<TreePath, Context
 		 * @return a wrapped expression
 		 */
 		private JCTree.JCExpression injectRecordValue(JCTree.JCExpression expr, int anchor, int recordingDepth) {
-			if(System.getProperty("java.version").startsWith("1.8") && recordingDepth > MAX_JAVA8_DEPTH) {
+			if(limitDepthOnJava8 && System.getProperty("java.version").startsWith("1.8") && recordingDepth > MAX_JAVA8_DEPTH) {
 				return expr;
 			}
 

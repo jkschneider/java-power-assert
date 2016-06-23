@@ -29,7 +29,15 @@ import java.util.Set;
 
 @SupportedAnnotationTypes("*")
 public class PowerAssertProcessor extends AbstractProcessor {
-	private JavacPowerAssertGenerator javacGenerator = new JavacPowerAssertGenerator();
+	private JavacPowerAssertGenerator javacGenerator;
+
+	public PowerAssertProcessor() {
+		this(true);
+	}
+
+	public PowerAssertProcessor(boolean limitDepthOnJava8) {
+		this.javacGenerator = new JavacPowerAssertGenerator(limitDepthOnJava8);
+	}
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
