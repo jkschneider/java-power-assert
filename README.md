@@ -107,7 +107,7 @@ testCompile 'io.jschneider:java-power-assert:latest.release'
 <dependency>
   <groupId>io.jschneider</groupId>
   <artifactId>java-power-assert</artifactId>
-  <version>0.7.0</version>
+  <version>0.9.1</version>
 </dependency>
 ```
 
