@@ -1,8 +1,14 @@
 package org.powerassert;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class TypeInferencePerformanceTest extends AbstractAssertTest {
+	@Before
+	public void setup() {
+		java = new JavaCompilerHelper(new PowerAssertProcessor(true));
+	}
+
 	/**
 	 * Otherwise, it will take several seconds to run on JDK 1.8. It is faster on JDK 7.
 	 * Type inferencing for nested generic method calls is known to be super slow on JDK 8, but this
