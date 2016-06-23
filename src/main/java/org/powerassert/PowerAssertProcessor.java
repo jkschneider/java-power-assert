@@ -16,7 +16,7 @@
 
 package org.powerassert;
 
-import java.util.Set;
+import org.powerassert.javac.JavacPowerAssertGenerator;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -25,6 +25,7 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import java.util.Set;
 
 @SupportedAnnotationTypes("*")
 public class PowerAssertProcessor extends AbstractProcessor {

@@ -58,6 +58,7 @@ produces this diagram:
 Regular Hamcrest assert output is suppressed in favor of the more descriptive diagram, however, the `Matcher` itself
 is diagrammed, so sophisticated descriptions will still be in the output.
 
+
 #### Non-Goals
 
 java-power-assert does not change the semantics of equality in Java. Every power-asserted statement will yield the same result as if it were left unchanged. In other words, if you turn off annotation processing during your build process or in your IDE, you can expect your tests to pass or fail just as they would if java-power-assert's annotation processing was doing its magic, you just would not see diagrammed output.
@@ -71,6 +72,24 @@ Notably, it does *not* work in Eclipse which uses the Eclipse Compiler for Java 
  [Lombok](https://github.com/rzwitserloot/lombok) does). It is currently unknown whether it is possible to access the ECJ AST from a regular annotation processor.
  
 Also, in the same way we diagram JUnit and Hamcrest assertions, we could trivially expand to assertj `assertThat` style chains. Contributions welcome if you beat me to it!
+
+## A special note about Java 8
+
+Java 8 saw a significant regression in type inference performance ([details here](https://bugs.openjdk.java.net/browse/JDK-8067767)).
+In short, the time it takes to infer types for nested generic method calls without explicit type arguments grows exponentially in JDK 8.
+This was *not* a problem in JDK 7 and has already been fixed in JDK 9, but Oracle does not intend to fix this in Java 8.
+Because the method we use to record values is generic itself, we have no choice but to arbitrarily limit the depth at which we can record values on Java 8. So a statement like:
+
+    @org.junit.Test public void test() {
+        Data d = new Data();
+        assert d.ident().ident().ident().ident() == null
+    }
+
+Yields a diagram like this:
+
+    d.ident().ident().ident().ident() == null,
+                     |       |        |
+                     Data[]  Data[]   false
 
 ## Getting started
 
