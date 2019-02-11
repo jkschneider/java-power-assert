@@ -100,9 +100,9 @@ Currently it released only in [BinTray](https://bintray.com/jkschneider/maven/ja
 Add the repository:
 ```groovy
 repositories {
-    maven {
-        url  "https://dl.bintray.com/jkschneider/maven" 
-    }
+  maven {
+    url  "https://dl.bintray.com/jkschneider/maven" 
+  }
 }
 ```
 
@@ -115,11 +115,11 @@ testCompile 'io.jschneider:java-power-assert:latest.release'
 Add the repository into your `pom.xml`:
 ```xml
 <repositories>
-	<repository>
-		<id>bintray-jkschneider-maven</id>
-		<name>bintray-jkschneider-maven</name>
-		<url>https://dl.bintray.com/jkschneider/maven</url>
-	</repository>
+  <repository>
+    <id>bintray-jkschneider-maven</id>
+    <name>bintray-jkschneider-maven</name>
+    <url>https://dl.bintray.com/jkschneider/maven</url>
+  </repository>
 </repositories>
 ```
 
@@ -129,6 +129,7 @@ And add the dependency:
   <groupId>io.jschneider</groupId>
   <artifactId>java-power-assert</artifactId>
   <version>0.9.1</version>
+  <scope>test</scope>
 </dependency>
 ```
 
