@@ -93,21 +93,43 @@ Yields a diagram like this:
 
 ## Getting started
 
-All you need to do is include java-power-assert as a dependency and turn on annotation processing in your IDE.
+All you need to do is include `java-power-assert` as a dependency and turn on annotation processing in your IDE.
+Currently it released only in [BinTray](https://bintray.com/jkschneider/maven/java-power-assert) so you need to add this repository first.
 
 #### Gradle
+Add the repository:
+```groovy
+repositories {
+  maven {
+    url  "https://dl.bintray.com/jkschneider/maven" 
+  }
+}
+```
 
+And add the dependency:
 ```groovy
 testCompile 'io.jschneider:java-power-assert:latest.release'
 ```
 
 #### Maven
+Add the repository into your `pom.xml`:
+```xml
+<repositories>
+  <repository>
+    <id>bintray-jkschneider-maven</id>
+    <name>bintray-jkschneider-maven</name>
+    <url>https://dl.bintray.com/jkschneider/maven</url>
+  </repository>
+</repositories>
+```
 
+And add the dependency:
 ```xml
 <dependency>
   <groupId>io.jschneider</groupId>
   <artifactId>java-power-assert</artifactId>
   <version>0.9.1</version>
+  <scope>test</scope>
 </dependency>
 ```
 
